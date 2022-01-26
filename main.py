@@ -4,42 +4,53 @@
 
 from __future__ import annotations
 import curses
-from curses import wrapper
-from enum import Enum
+from curses import wrapper, window
 
-class Status(Enum):
-    """Window Enum"""
-    TODO = 0
-    IN_PROGRESS = 1
-    DONE = 2
 
-def drawscr(windows: list) -> None:
-    """Prints screen frame"""
-    for window, title in windows:
-        window.refresh()
-        window.attron(curses.A_BOLD)
-        window.border(0, 0, 0, 0, 0, 0, 0, 0)
-        window.addstr(title)
-        window.refresh() 
+class ListWindow:
+    """List window object"""
+    def __init__(self, window: curses.window, title: str, items: list):
+        self.window = window
+        self.title = title
+        self.items = items 
+
+    def render_window(self):
+        """renders window object"""
+        self.window.clear()
+        self.window.attron(curses.A_BOLD)
+        self.window.border(0, 0, 0, 0, 0, 0, 0, 0)
+        self.window.addstr(self.title)
+        self.window.refresh()
 
 
 def main(stdscr):
     """main function"""
     height, width = stdscr.getmaxyx()
 
+    # item lists
+    todo_items = []
+    in_progress_items = []
+    done_items = []
+
     # setup windows
-    todo_win = curses.newwin(height, width//3, 0, 0)
-    in_progress_win = curses.newwin(height, width//3, 0, width//3 + 1)
-    done_win = curses.newwin(height, width//3, 0, 2*width//3 + 1) 
-    windows = [[todo_win, 'To Do'],
-               [in_progress_win, 'In Progress'],
-               [done_win, 'Done']]
-    todo_items = [{"task": "Walk the dog", "status": Status.TODO}]
+    todo_win = ListWindow(curses.newwin(height, width//3, 0, 0),
+                    'To Do',
+                    todo_items)
+    in_progress_win = ListWindow(curses.newwin(height, width//3, 0, width//3),
+                    'In Progress',
+                    in_progress_items)
+    done_win = ListWindow(curses.newwin(height, width//3, 0, 2*width//3),
+                    'Done',
+                    todo_items)
+    windows = [todo_win, in_progress_win, done_win]
 
     # screen draw loop
-    drawscr(windows)
-    todo_win.getch()
+    stdscr.refresh()
 
+    for lwin in windows:
+        lwin.render_window()
+
+    todo_win.window.getch()
 
 
 if __name__ == '__main__':
